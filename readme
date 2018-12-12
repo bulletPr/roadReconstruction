@@ -1,0 +1,37 @@
+Step 1：轨迹文件格式转换
+ 
+1)将轨迹文件转换为txt格式的shp文件。
+2)将txttxt格式的shp文件在ArcGIS中转化为shapefile
+
+ 
+附：如何从 ArcGIS 10.x 中找回 Samples 工具箱
+ 
+
+Step 2：轨迹文件增密
+ 
+1)点间距参数10m.
+
+ 
+2)导出要素顶点
+ 
+注：1）step1和Step2可以独立写成一个代码文件：读取轨迹文件，判断轨迹采样点间距是否大于阈值（10m），如果大于阈值，则沿着轨迹方向插入虚拟采样点，对其进行增密。此操作可以是预处理独立于ArcGIS、Windows。
+2）step1和step2可以在windows端进行操作，作为数据的预处理步骤。然后把处理的增密后的轨迹采样点上传到服务器端。
+
+Step3:
+ 
+根据导出的要素顶点文件生成空间采样密度灰度栅格
+运行step3.m matlab脚本文件。
+生成density_figure.fits密度图像
+Step4:
+在Ubuntu（服务器端），进入disperse文件夹bin目录下，运行:
+./mse density_figure.fits -periodicity 0 -cut 0.006 -upSkl
+./skelconv density_figure.fits_c0.006.up.NDskl -smooth 0 -to segs_ascii
+ 
+Step5:
+在Ubuntu（服务器端）将disperse处理后生成的文件转换为txt格式的shp文件，或者直接转换为可被Geoserver识别的矢量文件格式。
+导入到geoserver，进行地图发布。
+ 
+参见step5.m
+注：手动剔除*up.NDskl.S000.a.segs文件中的表头
+ 
+
