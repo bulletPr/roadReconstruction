@@ -1,0 +1,44 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <title>WMS without Projection</title>
+    <link rel="stylesheet" href="https://openlayers.org/en/v4.0.1/css/ol.css" type="text/css">
+    <!-- The line below is only needed for old environments like Internet Explorer and Android 4.x -->
+    <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL"></script>
+    <script src="https://openlayers.org/en/v4.0.1/build/ol.js"></script>
+  </head>
+  <body>
+    <div id="map" class="map"></div>
+    <script>
+      var wmsSource = new ol.source.TileWMS({
+        url: 'http://localhost:8080/geoserver/cyw/wms?service=WMS&version=1.1.0&request=GetMap&layers=cyw:result&styles=&bbox=390030.236849,5817060.83589,395090.236849,5822990.83589&width=655&height=768&srs=EPSG:4839&format=image%2Fvnd.jpeg-png',
+      });
+
+      var wmslayer = 
+        new ol.layer.Tile({
+          source: wmsSource
+        });
+
+
+      // A minimal projection object is configured with only the SRS code and the map
+      // units. No client-side coordinate transforms are possible with such a
+      // projection object. Requesting tiles only needs the code together with a
+      // tile grid of Cartesian coordinates; it does not matter how those
+      // coordinates relate to latitude or longitude.
+      var projection = new ol.proj.Projection({
+        code: 'EPSG:4839',
+        units: 'm'
+      });
+
+      var map = new ol.Map({
+        layers: [wmslayer],
+        target: 'map',
+        view: new ol.View({
+          center: [392144.50705,5819957.15880],
+          projection: projection,
+          zoom: 13
+        })
+      });
+    </script>
+  </body>
+</html>

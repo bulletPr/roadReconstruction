@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>WFS</title>
+    <link rel="stylesheet" href="https://openlayers.org/en/v4.0.1/css/ol.css" type="text/css">
+    <!-- The line below is only needed for old environments like Internet Explorer and Android 4.x -->
+    <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL"></script>
+    <script src="https://openlayers.org/en/v4.0.1/build/ol.js"></script>
+    <link rel="stylesheet" href="css/mapstyle.css" type="text/css">
+  </head>
+  <body>
+    <div id="map" class="map" height="720" width="960">
+      <div id="mouse-position"></div>
+    </div>
+    <div id="info" style="folat:right; position:absolute; top:55px; right:5px; overflow-x: auto; overflow-y: auto; height: 500px; width:100px;">&nbsp;
+    </div>
+    <script>
+    		
+    		var customStyleFunction = function(feature,resolution){
+    			if(feature.get('Simlarity')<=0){
+    				strokeColor = '#fff5eb'
+    			}
+    			else if(0<feature.get('Simlarity')<=0.3){
+    				strokeColor='#fed2a6'
+    			}
+    			else if(0.3<feature.get('Simlarity')<=0.7){
+    				strokeColor='#fd9243'
+    			}
+    			else if(0.7<feature.get('Simlarity')<=0.9){
+    				strokeColor='#df4f05'
+    			}
+    			else{
+    				strokeColor='#7f2704'
+    			}
+    			
+    			return[new ol.style.Style({
+    				stroke: new ol.style.Stroke({
+    					color:strokeColor,
+    					width:3
+    				
+    				})
+    			})];
+    		}
+    		
+    		var basicLayerStyle = new ol.style.Style({
+    			stroke: new ol.style.Stroke({
+    				color:'#5e585e',
+    				width:1
+    			})
+    		});
+    		
+        var basicBerlinSource = new ol.source.Vector({
+          url: 'data/map.geojson',
+          format: new ol.format.GeoJSON(),
+          wrapX:false
+        });
+
+        var basicLayer = new ol.layer.Vector({
+          source:basicBerlinSource,
+          style: basicLayerStyle
+        });
+
+        var vectorSource = new ol.source.Vector({
+          url: 'data/assessment.geojson',
+          format: new ol.format.GeoJSON(),
+          wrapX:false
+        });
+
+        var vectorLayer = new ol.layer.Vector({
+          source: vectorSource,
+          style:customStyleFunction
+        });
+        
+        var map = new ol.Map({
+          layers: [
+          basicLayer,
+          vectorLayer
+          ],
+          target: 'map',
+          view: new ol.View({
+            proj:'EPSG:4839',
+            center: [485511.049938,4212616.122799],
+            zoom: 13
+          })
+        });
+        
+        //实例化ZoomSlider控件并加载到地图容器中
+        var zoomslider = new ol.control.ZoomSlider();
+        map.addControl(zoomslider);
+        //实例化zoomToExtent控件并加载到地图容器中
+        var zoomToExtent = new ol.control.ZoomToExtent({
+          extent: [390030,5817060,395100,5825000]
+        });
+        map.addControl(zoomToExtent);
+        
+        //实例化鼠标位置控件并加载到地图容器中
+        var mousePositionControl = new ol.control.MousePosition({
+          coordinateFormat: ol.coordinate.createStringXY(4),
+          projection: 'EPSG:4839',
+          className: 'custom-mouse-position',
+          target: document.getElementById('mouse-position'),
+          undefinedHTML: '&nbsp'
+        });
+        map.addControl(mousePositionControl);
+        
+        //增加比例尺、全屏显示控件
+        var scaleLineControl = new ol.control.ScaleLine({
+          units: "metric"
+        });
+        map.addControl(scaleLineControl);
+        var fullScreenControl = new ol.control.FullScreen;
+        map.addControl(fullScreenControl);
+
+        //增加点选select交互
+        var select = new ol.interaction.Select({
+          wrapX:false
+        });
+        map.addInteraction(select);
+
+        var selectFeatures = select.getFeatures();
+
+        //增加框选交互
+        var dragBox = new ol.interaction.DragBox({
+          condition: ol.events.condition.platformModifierKeyOnly
+        });
+
+        map.addInteraction(dragBox);
+
+        var infoBox = document.getElementById('info');
+
+        dragBox.on('boxend',function(){
+          //在框里的要素被加入到被选择的要素集里，显示她们的file_ID在“info”div里边
+          var info = [];
+          var extent = dragBox.getGeometry().getExtent();
+          vectorSource.forEachFeatureIntersectingExtent(extent,function(feature) {
+            selectFeatures.push(feature);
+            info.push(feature.get('Simlarity'));
+          });
+          var htmls="";
+          var i=0;
+          if(info.length > 0){
+            htmls = htmls + "<table style=\"border-style:solid; border-width:1px; width:100px;\">";
+            htmls = htmls + "<tr><td>Simlarity</td></tr>";
+
+            for(i;i<info.length;i++){
+              if(i%2 ==0)
+                htmls = htmls + "<tr>";
+              else
+                htmls = htmls + "<tr bgcolor=\"#F0F0F0\">";
+              htmls = htmls + "<td>" + info[i] + "</td>";
+              htmls = htmls + "</tr>";
+            }
+            htmls = htmls + "</table>"
+            infoBox.innerHTML = htmls;
+            //infoBox.innerHTML = info.join(',');
+          }
+        });
+
+        //当重新画框或点击地图时清除选集
+        dragBox.on('boxstart',function(){
+          selectFeatures.clear();
+          infoBox.innerHTML = '&nbsp';
+        });
+
+        map.on('click',function(){
+          selectFeatures.clear();
+          infoBox.innerHTML = '&nbsp';
+        });
+
+        var modify = new ol.interaction.Modify({
+          features: select.getFeatures()
+        });
+        map.addInteraction(modify);
+
+    </script>
+  </body>
+</html>
