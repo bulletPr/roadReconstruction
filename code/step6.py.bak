@@ -1,0 +1,13 @@
+﻿import arcpy
+
+#set the workspace environment and run Clip_analysis
+arcpy.env.workspace = "F:\Lab\LHY\python\data"
+
+#to add a toolbox from a local server,provide the sever and toolbox name
+#delimited by a semi-colon
+arcpy.ImportToolbox("D:\Soft\ArcGIS\Desktop10.2\ArcToolbox\Toolboxes\Samples .tbx","mySamplesTool")
+
+#define text to shp
+output_name2 = "result.shp"
+input_txt2="F:\Lab\LHY\python\data\result.txt"
+arcpy.CreateFeaturesFromTextFile_mySamplesTool(input_txt2,".",output_name2,"")
